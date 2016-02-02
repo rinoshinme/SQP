@@ -1,4 +1,4 @@
-#if 0
+#if 1
 #include <GL\glut.h>
 #include <iostream>
 #include <stdio.h>
@@ -6,6 +6,7 @@
 #include "utils.h"
 #include "pdata.h"
 #include "functions.h"
+#include "pinv.h"
 
 /* 
  * Solve the SQP problem with functions defined in example1.h
@@ -86,8 +87,12 @@ void Sqpm(Vector x0, Vector mu0, Vector lam0,
 		Ae = hxPrime(x);
 		Ai = gxPrime(x);
 		Ak = VStack(Ae, Ai);
+#if 0
 		Matrix pinvAk = pinv(Ak); // pinv...
 		Vector lamu = MxV(pinvAk.Transpose(), dfk);
+#else
+		Vector lamu = LeastSquare(Ak, dfk);
+#endif
 		// update mu and lam
 		for (int i = 0; i < l; ++i)
 			mu.SetValue(i, lamu.GetValue(i));
@@ -118,6 +123,11 @@ void Sqpm(Vector x0, Vector mu0, Vector lam0,
 
 double width = 600;
 double height = 600;
+
+void SolveProblem()
+{
+
+}
 
 void init()
 {

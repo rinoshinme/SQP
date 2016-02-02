@@ -154,7 +154,6 @@ Matrix h1xPrime(const Vector& x)
 	return h1xprime;
 }
 
-
 // derivative of h2x
 Matrix h2xPrime(const Vector& x)
 {
