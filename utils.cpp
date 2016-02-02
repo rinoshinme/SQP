@@ -77,7 +77,82 @@ Vector operator*(double a, const Vector& vector)
 // =======================================================================================
 // Matrix operators
 
+Matrix& Matrix::operator+=(const Matrix& rhs)
+{
+	for (int i = 0; i < rows; ++i)
+	{
+		for (int j = 0; j < cols; ++j)
+		{
+			SetValue(i, j, GetValue(i, j) + rhs.GetValue(i, j));
+		}
+	}
+	return *this;
+}
 
+Matrix& Matrix::operator-=(const Matrix& rhs)
+{
+	for (int i = 0; i < rows; ++i)
+	{
+		for (int j = 0; j < cols; ++j)
+		{
+			SetValue(i, j, GetValue(i, j) - rhs.GetValue(i, j));
+		}
+	}
+	return *this;
+}
+
+Matrix operator+(const Matrix& lhs, const Matrix& rhs)
+{
+	Matrix result(lhs);
+	return result += rhs;
+}
+
+Matrix operator-(const Matrix& lhs, const Matrix& rhs)
+{
+	Matrix result(lhs);
+	return result -= rhs;
+}
+
+Matrix& Matrix::operator*=(double a)
+{
+	for (int i = 0; i < rows; ++i)
+	{
+		for (int j = 0; j < cols; ++j)
+		{
+			SetValue(i, j, GetValue(i, j) * a);
+		}
+	}
+	return *this;
+}
+
+Matrix& Matrix::operator/=(double a)
+{
+	for (int i = 0; i < rows; ++i)
+	{
+		for (int j = 0; j < cols; ++j)
+		{
+			SetValue(i, j, GetValue(i, j) / a);
+		}
+	}
+	return *this;
+}
+
+Matrix operator*(const Matrix& matrix, double a)
+{
+	Matrix result(matrix);
+	return result *= a;
+}
+
+Matrix operator*(double a, const Matrix& matrix)
+{
+	return matrix * a;
+}
+
+Matrix operator/(const Matrix& matrix, double a)
+{
+	Matrix result(matrix);
+	return result /= a;
+}
 
 // =====================================================================================
 // Matrix and Vector manipulations

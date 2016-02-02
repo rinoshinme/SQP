@@ -1,3 +1,4 @@
+#if 0
 #include <GL\glut.h>
 #include <iostream>
 #include <stdio.h>
@@ -39,7 +40,7 @@ void Sqpm(Vector x0, Vector mu0, Vector lam0,
 	Matrix Ak = VStack(Ae, Ai);
 
 	int k = 0;
-	Vector dk, mu, lam;
+	Vector dk;
 	while (k < maxk)
 	{
 		QPSubProblem(dfk, Bk, Ae, hk, Ai, gk, &dk, &mu, &lam);
@@ -152,3 +153,4 @@ void main(int argc, char** argv)
 	glutDisplayFunc(display);
 	glutMainLoop();
 }
+#endif
