@@ -1,10 +1,25 @@
 #ifndef _SQP_UTILS_H
 #define _SQP_UTILS_H
 
-#define _USE_MATH_DEFINES
 #include <math.h>
 #include <memory>
-#include "matrix_inversion.h"
+#include <Eigen/Dense>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+double dist(double x1, double y1, double x2, double y2);
+
+double dist2(double x1, double y1, double x2, double y2);
+
+void swap(double* a, double* b);
+
+int inv(double* p, int n);
+
+#ifdef __cplusplus
+}
+#endif
 
 class Vector
 {
@@ -152,6 +167,14 @@ public:
 			memcpy(data, d, sizeof(double) * rows * cols);
 	}
 
+	Matrix(const Matrix& copy)
+	{
+		rows = copy.rows;
+		cols = copy.cols;
+		data = new double[rows * cols];
+		memcpy(data, copy.data, sizeof(double) * rows * cols);
+	}
+
 	Matrix& operator=(const Matrix& rhs)
 	{
 		if (this == &rhs)
@@ -252,16 +275,13 @@ double Dot(const Vector& v1, const Vector& v2); // inner product -> double
 Matrix Out(const Vector& v1, const Vector& v2); // outer product -> matrix
 double vBv(const Vector& v, const Matrix& B);
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+void DisplayVector(const Vector& v);
+void DisplayMatrix(const Matrix& m);
 
-double dist(double x1, double y1, double x2, double y2);
+/*
+ * Solve Least Square problem using Eigen library...
+ */
+Vector LeastSquare(const Matrix& matrix, const Vector& b);
 
-double dist2(double x1, double y1, double x2, double y2);
-
-#ifdef __cplusplus
-}
-#endif
 #endif
 

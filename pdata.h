@@ -9,9 +9,9 @@
 
 double fx(const Vector& x);
 
-Vector gx(const Vector& x);
+Vector gx(const Vector& x); // equality constraints
 
-Vector hx(const Vector& x);
+Vector hx(const Vector& x); // inequality constraints
 
 Vector fxPrime(const Vector& x);
 

@@ -1,4 +1,5 @@
 #include "pdata.h"
+#include <iostream>
 
 /*
  * A simple example
@@ -69,7 +70,7 @@ Vector fxPrime(const Vector& x)
 	return fxp;
 }
 
-Vector gx(const Vector& x)
+Vector hx(const Vector& x)
 {
 	// only end position equality
 	double g1 = x.GetValue(N-1) - 2;
@@ -118,7 +119,7 @@ Vector h2x(const Vector& x, double vmin, double vmax)
 	return h2x;
 }
 
-Vector hx(const Vector& x)
+Vector gx(const Vector& x)
 {
 	Vector upperhx = h1x(x, sep);
 	Vector lowerhx = h2x(x, vmin, vmax);
@@ -134,7 +135,7 @@ Vector hx(const Vector& x)
 
 // derivatives (Matrix)
 // derivative of g
-Matrix gxPrime(const Vector& x)
+Matrix hxPrime(const Vector& x)
 {
 	Matrix gprime(2, 3*N);
 	gprime.SetValue(0, N-1, 1);
@@ -181,7 +182,7 @@ Matrix h2xPrime(const Vector& x)
 	return h2xprime;
 }
 
-Matrix hxPrime(const Vector& x)
+Matrix gxPrime(const Vector& x)
 {
 	Matrix upperhxPrime = h1xPrime(x);
 	Matrix lowerhxPrime = h2xPrime(x);
@@ -257,7 +258,16 @@ Vector dlax(const Vector& x, const Vector& mu, const Vector& lam)
 	Vector df = fxPrime(x);
 	Matrix Ae = hxPrime(x);
 	Matrix Ai = gxPrime(x);
+	
 	Vector dl = df - MxV(Ae, mu) - MxV(Ai, lam);
+
+#if 0
+	// DisplayVector(df);
+	// DisplayVector(mu);
+	// DisplayMatrix(Ae);
+	// DisplayMatrix(Ai);
+#endif
+
 	return dl;
 }
 

@@ -3,21 +3,29 @@
 #include <iostream>
 #include <stdio.h>
 #include <math.h>
+
 #include "utils.h"
 #include "pdata.h"
 #include "functions.h"
-#include "pinv.h"
+
+#define _SQP_DEBUG 1
+
+#define max(a, b) (a)>(b)?(a):(b)
 
 /* 
  * Solve the SQP problem with functions defined in example1.h
  */
-void Sqpm(Vector x0, Vector mu0, Vector lam0,
-		  Vector* x_result, Vector* mu_result, Vector* lam_result)
+void Sqpm(Vector x0, 
+	      Vector mu0, 
+		  Vector lam0,
+		  Vector* x_result, 
+		  Vector* mu_result, 
+		  Vector* lam_result)
 {
 	int maxk = 1000;
-	int n = x0.GetSize();
-	int l = mu0.GetSize();
-	int m = lam0.GetSize();
+	int n = x0.GetSize();     // 20
+	int l = mu0.GetSize();    // 2
+	int m = lam0.GetSize();   // 116
 
 	double rho = 0.5;
 	double eta = 0.1;
@@ -30,32 +38,40 @@ void Sqpm(Vector x0, Vector mu0, Vector lam0,
 	Vector lam(lam0);
 	Matrix Bk(B0);
 	double sigma = 0.8;
-	double epsilon1 = 1.0e-6;
+	double epsilon1 = 1.0e-5;
 	double epsilon2 = 1.0e-5;
-
+	
 	Vector hk = hx(x);
 	Vector gk = gx(x);
 	Vector dfk = fxPrime(x);
 	Matrix Ae = hxPrime(x);
 	Matrix Ai = gxPrime(x);
-	Matrix Ak = VStack(Ae, Ai);
-
+	Matrix Ak = VStack(Ae, Ai); // (height: l + m)
+	
 	int k = 0;
 	Vector dk;
 	while (k < maxk)
 	{
+#ifdef _SQP_DEBUG
+		std::cout << "point 1: before subproblem starts" << std::endl;
+#endif
+
 		QPSubProblem(dfk, Bk, Ae, hk, Ai, gk, &dk, &mu, &lam);
+
+#ifdef _SQP_DEBUG
+		std::cout << "point 2: after subproblem finished" << std::endl;
+#endif
 		// calculate max(-gx, 0)
 		Vector mgx(gk.GetSize());
 		for (int i = 0; i < gk.GetSize(); ++i)
-			mgx.SetValue(i, (-gk.GetValue(i) > 0) ? -gk.GetValue(i) : 0);
+			mgx.SetValue(i, max(-gk.GetValue(i), 0));
 		
 		double mp1 = hk.Norm1() + mgx.Norm1();
 		if (dk.Norm1() < epsilon1 && mp1 < epsilon2)
 			break;
 
 		double deta = 0.05;
-		double tau = (mu.NormInf() > lam.NormInf()) ? mu.NormInf() : lam.NormInf();
+		double tau = max(mu.NormInf(), lam.NormInf());
 		if (sigma * (tau + deta) < 1)
 			sigma = sigma;
 		else
@@ -63,6 +79,10 @@ void Sqpm(Vector x0, Vector mu0, Vector lam0,
 
 		int im = 0; // Armijo search
 		int mk;
+
+#ifdef _SQP_DEBUG
+		std::cout << "point 3: before Armijo search" << std::endl;
+#endif
 		while (im <= 20)
 		{
 			double rhoim = pow(rho, im);
@@ -78,14 +98,18 @@ void Sqpm(Vector x0, Vector mu0, Vector lam0,
 			if (im == 20)
 				mk = 10;
 		}
+
+#ifdef _SQP_DEBUG
+		std::cout << "point 4: after Armijo search" << std::endl;
+#endif
 		double alpha = pow(rho, mk);
 		Vector x1 = x + alpha * dk;
-		// update
+		// update constraints
 		hk = hx(x1);
 		gk = gx(x1);
 		dfk = fxPrime(x1);
-		Ae = hxPrime(x);
-		Ai = gxPrime(x);
+		Ae = hxPrime(x1);
+		Ai = gxPrime(x1);
 		Ak = VStack(Ae, Ai);
 #if 0
 		Matrix pinvAk = pinv(Ak); // pinv...
@@ -100,7 +124,7 @@ void Sqpm(Vector x0, Vector mu0, Vector lam0,
 			lam.SetValue(i, lamu.GetValue(i+l));
 		// update Bk
 		Vector sk = alpha * dk;
-		Vector yk = dlax(x1, mu, lam) -dlax(x, mu, lam);
+		Vector yk = dlax(x1, mu, lam) - dlax(x, mu, lam);
 
 		double theta;
 		if (Dot(sk, yk) > 0.2 * vBv(sk, Bk))
@@ -108,10 +132,20 @@ void Sqpm(Vector x0, Vector mu0, Vector lam0,
 		else
 			theta = 0.8 * vBv(sk, Bk) / (vBv(sk, Bk) - Dot(sk, yk));
 
-		Vector zk = theta * yk + (1-theta) * MxV(Bk, sk);
+		Vector zk = theta * yk + (1 - theta) * MxV(Bk, sk);
 		Bk = Bk + Out(zk, zk) / Dot(sk, zk) - Out(MxV(Bk, sk), MxV(Bk, sk)) / vBv(sk, Bk);
 		x = x1;
 		k++;
+
+#ifdef _SQP_DEBUG
+		std::cout << "point 5: after update complete" << std::endl;
+#endif
+
+#if 1
+		DisplayVector(x);
+
+#endif
+
 	}
 	*x_result = x;
 	*mu_result = mu;
@@ -124,9 +158,24 @@ void Sqpm(Vector x0, Vector mu0, Vector lam0,
 double width = 600;
 double height = 600;
 
+static Vector x0;
+static Vector mu0;
+static Vector lam0;
+static Vector x;
+static Vector mu;
+static Vector lam;
+
+#define N 20
+
 void SolveProblem()
 {
-
+	// initialize x0, mu0 and lam0
+	x0 = Vector(3 * N);
+	for (int i = 0; i < 3*N; ++i)
+		x0.SetValue(i, i * 0.01);
+	mu0 = Vector(2);
+	lam0 = Vector(6 * N - 4); // 116;
+	Sqpm(x0, mu0, lam0, &x, &mu, &lam);
 }
 
 void init()
@@ -135,7 +184,7 @@ void init()
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	gluOrtho2D(0.0, width, 0.0, height);
-
+	SolveProblem();
 }
 
 void display()
